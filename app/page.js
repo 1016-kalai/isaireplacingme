@@ -33,8 +33,8 @@ export default function Home() {
             setResult(finalResult);
             setScreen('result');
 
-            // Fire and forget save
-            saveScanResult(formData, finalResult).catch(console.error);
+            // Await the save so Vercel serverless function doesn't die prematurely
+            await saveScanResult(formData, finalResult).catch(console.error);
         } catch (err) {
             console.error("Score / AI error:", err);
             const fallbackIntel = { mod: 1.0, tier: "unknown", note: "Could not complete full analysis." };
@@ -51,7 +51,7 @@ export default function Home() {
             setScreen('result');
 
             const { saveScanResult } = await import('@/app/actions');
-            saveScanResult(formData, finalResult).catch(console.error);
+            await saveScanResult(formData, finalResult).catch(console.error);
         }
     }, [formData]);
 

@@ -72,12 +72,15 @@ Return ONLY a valid JSON object matching this exact format:
 }
 
 export async function saveScanResult(formData, result) {
+    console.log(">>> [SERVER ACTION] Entering saveScanResult for:", formData.name);
+
     if (!supabase) {
-        console.warn("Supabase client not initialized. Skipping save.");
+        console.error(">>> [SERVER ACTION] Supabase client is NULL. This is likely an environment variable issue in Vercel.");
         return { success: false, error: 'Supabase not configured' };
     }
 
     try {
+        console.log(">>> [SERVER ACTION] Attempting Supabase insert...");
         const { data, error } = await supabase
             .from('scans')
             .insert([
@@ -94,13 +97,14 @@ export async function saveScanResult(formData, result) {
             ]);
 
         if (error) {
-            console.error("Supabase Insert Error:", error);
+            console.error(">>> [SERVER ACTION] Supabase Insert Error:", error);
             return { success: false, error: error.message };
         }
 
+        console.log(">>> [SERVER ACTION] Save successful!");
         return { success: true, data };
     } catch (err) {
-        console.error("Failed to save scan result:", err);
-        return { success: false, error: 'Internal Server Error' };
+        console.error(">>> [SERVER ACTION] Unexpected error during save:", err);
+        return { success: false, error: err.message || 'Internal Server Error' };
     }
 }

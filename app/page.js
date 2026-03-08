@@ -34,12 +34,12 @@ export default function Home() {
             finalResult = { score, orgIntel, countdown, badge, roast };
             setResult(finalResult);
 
-            // In Next.js Server Actions executed from Client Components, 
-            // blocking the React render cycle with an await can sometimes be dropped by React's scheduler on Vercel.
-            // Executing the server action directly.
-            startTransition(() => {
-                saveScanResult(formData, finalResult).catch(console.error);
-            });
+            console.log(">>> [BROWSER] Calculation complete. Result:", finalResult);
+            console.log(">>> [BROWSER] Triggering saveScanResult...");
+
+            saveScanResult(formData, finalResult)
+                .then(res => console.log(">>> [BROWSER] Save response from server:", res))
+                .catch(err => console.error(">>> [BROWSER] Server Action failed:", err));
 
             setScreen('result');
         } catch (err) {
@@ -56,9 +56,10 @@ export default function Home() {
             };
             setResult(finalResult);
 
-            startTransition(() => {
-                saveScanResult(formData, finalResult).catch(console.error);
-            });
+            console.log(">>> [BROWSER] Using fallback result. Triggering save...");
+            saveScanResult(formData, finalResult)
+                .then(res => console.log(">>> [BROWSER] Fallback save result:", res))
+                .catch(err => console.error(">>> [BROWSER] Fallback save failed:", err));
 
             setScreen('result');
         }

@@ -21,27 +21,37 @@ export default function Home() {
         if (!formData) return;
         try {
             // First, trigger the server action (awaiting real AI lookup)
-            const { getRealOrgIntel } = await import('@/app/actions');
+            const { getRealOrgIntel, saveScanResult } = await import('@/app/actions');
             const dynamicIntel = await getRealOrgIntel(formData.organisation, formData.industry, formData.role);
 
             const { score, orgIntel } = calculateScore(formData, dynamicIntel);
             const countdown = scoreToCountdown(score);
             const badge = getBadge(score);
             const roast = getRoast(score, formData);
-            setResult({ score, orgIntel, countdown, badge, roast });
+
+            const finalResult = { score, orgIntel, countdown, badge, roast };
+            setResult(finalResult);
             setScreen('result');
+
+            // Fire and forget save
+            saveScanResult(formData, finalResult).catch(console.error);
         } catch (err) {
             console.error("Score / AI error:", err);
             const fallbackIntel = { mod: 1.0, tier: "unknown", note: "Could not complete full analysis." };
             const fallbackScore = 65;
-            setResult({
+
+            const finalResult = {
                 score: fallbackScore,
                 orgIntel: fallbackIntel,
                 countdown: scoreToCountdown(fallbackScore),
                 badge: getBadge(fallbackScore),
                 roast: getRoast(fallbackScore, formData),
-            });
+            };
+            setResult(finalResult);
             setScreen('result');
+
+            const { saveScanResult } = await import('@/app/actions');
+            saveScanResult(formData, finalResult).catch(console.error);
         }
     }, [formData]);
 

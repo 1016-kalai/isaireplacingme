@@ -2,6 +2,7 @@
 
 import { getOrgIntel as fallbackOrgIntel } from '@/lib/scoring';
 import { GoogleGenAI } from '@google/genai';
+import { supabase } from '@/lib/supabase';
 
 // We initialize the client inside the function so it doesn't crash on build if key is missing
 function getGeminiClient() {
@@ -67,5 +68,39 @@ Return ONLY a valid JSON object matching this exact format:
         console.error("Gemini API Error:", error);
         // Fallback to our hardcoded database/keyword logic if the API fails, times out, or hallucinates
         return fallbackOrgIntel(orgName);
+    }
+}
+
+export async function saveScanResult(formData, result) {
+    if (!supabase) {
+        console.warn("Supabase client not initialized. Skipping save.");
+        return { success: false, error: 'Supabase not configured' };
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('scans')
+            .insert([
+                {
+                    name: formData.name,
+                    age: parseInt(formData.age, 10),
+                    industry: formData.industry,
+                    role: formData.role,
+                    organisation: formData.organisation,
+                    score: result.score,
+                    badge: result.badge,
+                    roast_note: result.roast
+                }
+            ]);
+
+        if (error) {
+            console.error("Supabase Insert Error:", error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, data };
+    } catch (err) {
+        console.error("Failed to save scan result:", err);
+        return { success: false, error: 'Internal Server Error' };
     }
 }
